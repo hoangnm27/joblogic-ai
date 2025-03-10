@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Test Case Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .tabs { display: flex; cursor: pointer; margin-bottom: 10px; }
+        .tab { padding: 10px 20px; border: 1px solid #ddd; background: #f1f1f1; }
+        .tab.active { background: #ddd; font-weight: bold; }
+        .content { display: none; }
+        .content.active { display: block; }
+        textarea { width: 100%; height: 100px; }
+        button { margin-top: 5px; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>Joblogic AI</h1>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab(1)">Joblogic Business Knowledge</div>
+        <div class="tab" onclick="switchTab(2)">Generate Test Cases</div>
+    </div>
+
+    <!-- Content for Assistant 1 -->
+    <div class="content active" id="content1">
+        <textarea id="prompt1" placeholder="Input promt here..."></textarea>
+        <button onclick="generateTestCase(1)">Please!!!!</button>
+        <h2>Result:</h2>
+        <div id="result1" style="white-space: pre-wrap; border: 1px solid #ddd; padding: 10px;"></div>
+    </div>
+
+    <!-- Content for Assistant 2 -->
+    <div class="content" id="content2">
+        <textarea id="prompt2" placeholder="Input promt here..."></textarea>
+        <button onclick="generateTestCase(2)">Generate test cases</button>
+        <h2>Result:</h2>
+        <div id="result2" style="white-space: pre-wrap; border: 1px solid #ddd; padding: 10px;"></div>
+    </div>
+
+    <script>
+        let threadId1 = null;
+        let threadId2 = null;
+        let apiKey = localStorage.getItem("openai_api_key");
+
+        const ASSISTANT_ID_1 = "asst_O7obur1KCwjWEi43oLd6vgla"; // 🔥 Assistant 1
+        const ASSISTANT_ID_2 = "asst_cfoXdMTHow5kPmrYEtNtD2Hu"; // 🔥 Assistant 2 (thay ID khác)
+
+        // 📌 Kiểm tra API Key
+        if (!apiKey) {
+            apiKey = prompt("Please input API key:");
+            if (apiKey) {
+                localStorage.setItem("openai_api_key", apiKey);
+            } else {
+                alert("API Key is required!");
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll(".tab").forEach((t, i) => {
+                t.classList.toggle("active", i + 1 === tab);
+            });
+            document.querySelectorAll(".content").forEach((c, i) => {
+                c.classList.toggle("active", i + 1 === tab);
+            });
+        }
+
+        async function createThread(tab) {
+            try {
+                const response = await fetch("https://api.openai.com/v1/threads", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                const data = await response.json();
+                if (data.id) {
+                    if (tab === 1) threadId1 = data.id;
+                    else threadId2 = data.id;
+                    console.log(`✅ Thread ID (Assistant ${tab}):`, data.id);
+                } else {
+                    console.error(`❌ Can not create thread for this assistant ${tab}`);
+                }
+            } catch (error) {
+                console.error(`❌ Error when creating thread for this assistant ${tab}:`, error);
+            }
+        }
+
+        async function generateTestCase(tab) {
+            const prompt = document.getElementById(`prompt${tab}`).value;
+            const resultDiv = document.getElementById(`result${tab}`);
+            resultDiv.innerHTML = "⏳ In progress...";
+
+            let threadId = tab === 1 ? threadId1 : threadId2;
+            let assistantId = tab === 1 ? ASSISTANT_ID_1 : ASSISTANT_ID_2;
+
+            if (!threadId) {
+                await createThread(tab);
+                threadId = tab === 1 ? threadId1 : threadId2;
+            }
+
+            try {
+                await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ role: "user", content: prompt })
+                });
+
+                const runRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json",
+                        "OpenAI-Beta": "assistants=v2"
+                    },
+                    body: JSON.stringify({ assistant_id: assistantId })
+                });
+
+                const runData = await runRes.json();
+                if (!runData.id) throw new Error("❌ Can not get run_id");
+                const runId = runData.id;
+                console.log(`✅ Run ID (Assistant ${tab}):`, runId);
+
+                let status = "";
+                do {
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    const checkRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${runId}`, {
+                        method: "GET",
+                        headers: { "Authorization": `Bearer ${apiKey}` }
+                    });
+
+                    const checkData = await checkRes.json();
+                    status = checkData.status;
+                    console.log(`🔄 Status (Assistant ${tab}):`, status);
+                } while (status !== "completed");
+
+                const messageRes = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+                    method: "GET",
+                    headers: { "Authorization": `Bearer ${apiKey}` }
+                });
+
+                const messageData = await messageRes.json();
+                console.log(`📌 OpenAI Messages (Assistant ${tab}):`, JSON.stringify(messageData, null, 2));
+
+                if (!messageData.data || messageData.data.length === 0) throw new Error("❌ No test cases available");
+
+                const correctMessage = messageData.data.find(msg => msg.run_id === runId);
+                if (!correctMessage) throw new Error("❌ No message with the correct run_id");
+
+                const extractedText = correctMessage.content
+                    .map(item => item.text?.value || "")
+                    .filter(text => text.trim() !== "")
+                    .join("\n");
+
+                console.log(`✅ Test Case (Assistant ${tab}):`, extractedText);
+                resultDiv.innerHTML = `<h3>✅ Test Case:</h3><pre>${extractedText}</pre>`;
+
+            } catch (error) {
+                resultDiv.innerHTML = `<h3>❌ Error:</h3> ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
