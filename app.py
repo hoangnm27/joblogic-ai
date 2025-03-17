@@ -30,7 +30,7 @@ tab1, tab2 = st.tabs(["Joblogic Business Knowledge", "Generate Test Cases"])
 with tab1:
     st.subheader("Input the request:")
     prompt1 = st.text_area("Prompt:", key="prompt1")
-    if st.button("Ask Job Logic AI", key="btn1"):
+    if st.button("Ask Joblogic AI", key="btn1"):
         with st.spinner("⏳ In Progress..."):
             thread_data = call_backend_api("/threads", "POST")
             thread_id = thread_data.get("id")
