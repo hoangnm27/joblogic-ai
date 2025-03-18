@@ -79,6 +79,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+logo_path = "Medium square transparent logo_300x178.png"  
+st.sidebar.image(logo_path, use_container_width=True)
+
 # 🚀 Assistant side bar
 st.sidebar.title("⚙️ Assistant List")
 assistant_choice = st.sidebar.radio("Select Assistant:", list(ASSISTANTS.keys()))
