@@ -3,6 +3,9 @@ import requests
 #import toml
 import time
 
+# 🚀 Config UI
+st.set_page_config(layout="wide")
+
 '''# 🚀 Load API Key from secrets.toml
 with open(".streamlit/secrets.toml", "r") as f:
     secrets = toml.load(f)
@@ -67,9 +70,6 @@ def call_openai_api(thread_id, message, assistant_id):
     response = next((msg for msg in messages if msg["run_id"] == run_id), None)
 
     return response["content"][0]["text"]["value"] if response else "❌ No response!"
-
-# 🚀 Config UI
-st.set_page_config(layout="wide")
 
 st.markdown(
     """
