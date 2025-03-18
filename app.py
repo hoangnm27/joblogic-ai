@@ -6,11 +6,6 @@ import time
 # 🚀 Config UI
 st.set_page_config(layout="wide")
 
-'''# 🚀 Load API Key from secrets.toml
-with open(".streamlit/secrets.toml", "r") as f:
-    secrets = toml.load(f)
-OPENAI_API_KEY = secrets["openai_api_key"]'''
-
 # 🚀 Load API key from the streamlit secret
 OPENAI_API_KEY = st.secrets["openai_api_key"]
 
