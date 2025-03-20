@@ -22,6 +22,7 @@ if "chat_history" not in st.session_state:
 if "thread_id" not in st.session_state:
     st.session_state["thread_id"] = None
 
+
 # 📌 Call function OpenAI API
 def call_openai_api(thread_id, message):
     headers = {
@@ -85,7 +86,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 🚀 Sidebar - Hiển thị logo Joblogic
+# 🚀 Sidebar - Joblogic logo
 logo_path = "Medium square transparent logo_300x178.png" 
 st.sidebar.image(logo_path, use_container_width=True)
 
@@ -114,8 +115,7 @@ for msg in st.session_state["chat_history"]:
     if isinstance(msg, dict) and "role" in msg and "content" in msg:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
-    else:
-        st.warning("⚠️ Data message error, please check again")
+
 
 
 # ✅ Message box
@@ -128,25 +128,20 @@ if st.session_state.get("loading", False):
 
 # ✅ Send message
 if user_input:
-    st.session_state["loading"] = True  # Loading
-
-    # 👉 Chat history
+    # 👉 Thêm tin nhắn của user vào lịch sử trước khi gọi API
     st.session_state["chat_history"].append({"role": "user", "content": user_input})
 
-    # ✅ Show user's message
+    # ✅ Hiển thị tin nhắn của user
     with st.chat_message("user"):
         st.write(user_input)
 
-    # ✅ Send message to Assistant
-    response = call_openai_api(thread_id, user_input)
+    # ✅ Gửi message đến API và nhận phản hồi
+    response = call_openai_api(st.session_state["thread_id"], user_input, assistant_id)
 
-    # ✅ Add AI's message to history
+    # 👉 Thêm phản hồi của AI vào lịch sử
     st.session_state["chat_history"].append({"role": "assistant", "content": response})
 
-    # ✅ Show AI's message
+    # ✅ Hiển thị tin nhắn của AI
     with st.chat_message("assistant"):
         st.write(response)
 
-    # ✅ Reset page
-    st.session_state["loading"] = False  # Off loading
-    st.rerun()
