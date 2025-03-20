@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-#import toml
 import time
 
 # 🚀 Config UI
@@ -15,19 +14,16 @@ OPENAI_API_KEY = st.secrets["openai_api_key"]
 
 # 🔥 Call API
 BACKEND_URL = "https://api.openai.com/v1"
-ASSISTANTS = {
-    "Business Knowledge": "asst_O7obur1KCwjWEi43oLd6vgla",
-    "Generate Test Cases": "asst_cfoXdMTHow5kPmrYEtNtD2Hu",
-}
+ASSISTANT_ID = "asst_cfoXdMTHow5kPmrYEtNtD2Hu"
 
 # ✅ Initialize session state if not have
 if "chat_history" not in st.session_state:
-    st.session_state["chat_history"] = {"Business Knowledge": [], "Generate Test Cases": []}
-if "thread_ids" not in st.session_state:
-    st.session_state["thread_ids"] = {}
+    st.session_state["chat_history"] = []
+if "thread_id" not in st.session_state:
+    st.session_state["thread_id"] = None
 
 # 📌 Call function OpenAI API
-def call_openai_api(thread_id, message, assistant_id):
+def call_openai_api(thread_id, message):
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json",
@@ -45,7 +41,7 @@ def call_openai_api(thread_id, message, assistant_id):
     run_res = requests.post(
         f"{BACKEND_URL}/threads/{thread_id}/runs",
         headers=headers,
-        json={"assistant_id": assistant_id}
+        json={"assistant_id": ASSISTANT_ID}
     )
     run_id = run_res.json().get("id")
 
@@ -70,6 +66,7 @@ def call_openai_api(thread_id, message, assistant_id):
 
     return response["content"][0]["text"]["value"] if response else "❌ No response!"
 
+# 🎨 Custom CSS for UI
 st.markdown(
     """
     <style>
@@ -78,21 +75,22 @@ st.markdown(
             margin-left: auto;
             margin-right: auto;
         }
+        .sidebar .sidebar-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-logo_path = "Medium square transparent logo_300x178.png"  
+# 🚀 Sidebar - Hiển thị logo Joblogic
+logo_path = "Medium square transparent logo_300x178.png" 
 st.sidebar.image(logo_path, use_container_width=True)
 
-# 🚀 Assistant side bar
-st.sidebar.title("⚙️ Assistant List")
-assistant_choice = st.sidebar.radio("Select Assistant:", list(ASSISTANTS.keys()))
-assistant_id = ASSISTANTS[assistant_choice]
-
-# ✅ Check thread_id of the current Assistant
-if assistant_choice not in st.session_state["thread_ids"]:
+# ✅ Check thread_id
+if not st.session_state["thread_id"]:
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json",
@@ -101,17 +99,18 @@ if assistant_choice not in st.session_state["thread_ids"]:
     thread_res = requests.post(f"{BACKEND_URL}/threads", headers=headers)
     thread_json = thread_res.json()
     if "id" in thread_json:
-        st.session_state["thread_ids"][assistant_choice] = thread_json["id"]
+        st.session_state["thread_id"] = thread_json["id"]
     else:
         st.error(f"❌ Error of creating thread: {thread_json}")
         st.stop()
 
-thread_id = st.session_state["thread_ids"][assistant_choice]
+thread_id = st.session_state["thread_id"]
 
-st.title(f"💬 {assistant_choice} Chatbot")
+# 🚀 Chatbot Title
+st.title("💬 Generate Test Cases Chatbot")
 
 # ✅ Show conversation history
-for msg in st.session_state["chat_history"][assistant_choice]:
+for msg in st.session_state["chat_history"]:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
@@ -121,24 +120,24 @@ user_input = st.chat_input("Input your message...")
 # ✅ Loading
 if st.session_state.get("loading", False):
     with st.spinner("⏳ AI is reviewing..."):
-        time.sleep(1)  # Loading effect
+        time.sleep(1)
 
 # ✅ Send message
 if user_input:
     st.session_state["loading"] = True  # Loading
 
     # 👉 Chat history
-    st.session_state["chat_history"][assistant_choice].append({"role": "user", "content": user_input})
+    st.session_state["chat_history"].append({"role": "user", "content": user_input})
 
     # ✅ Show user's message
     with st.chat_message("user"):
         st.write(user_input)
 
     # ✅ Send message to Assistant
-    response = call_openai_api(thread_id, user_input, assistant_id)
+    response = call_openai_api(thread_id, user_input)
 
     # ✅ Add AI's message to history
-    st.session_state["chat_history"][assistant_choice].append({"role": "assistant", "content": response})
+    st.session_state["chat_history"].append({"role": "assistant", "content": response})
 
     # ✅ Show AI's message
     with st.chat_message("assistant"):
