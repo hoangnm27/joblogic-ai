@@ -27,7 +27,7 @@ st.markdown(
     """
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h1 style="margin: 0;">💬 Generate Test Cases Chatbot</h1>
-        <img src="https://www.joblogic.com/wp-content/uploads/2021/02/joblogic-logo.png" 
+        <img src="https://github.com/hoangnm27/joblogic-ai/blob/main/Medium%20square%20transparent%20logo_300x178.png?raw=true" 
              alt="Joblogic Logo" style="height: 50px;">
     </div>
     <hr>
