@@ -4,7 +4,11 @@ import requests
 import time
 
 # 🚀 Config UI
-st.set_page_config(layout="wide")
+st.set_page_config(
+    page_title="Joblogic Chatbot",  # Browser Title
+    page_icon="Icon-60x60.png",  # icon
+    layout="wide"
+)
 
 # 🚀 Load API key from the streamlit secret
 OPENAI_API_KEY = st.secrets["openai_api_key"]
@@ -117,7 +121,7 @@ user_input = st.chat_input("Input your message...")
 # ✅ Loading
 if st.session_state.get("loading", False):
     with st.spinner("⏳ AI is reviewing..."):
-        time.sleep(1)  # Giữ hiệu ứng loading một chút trước khi cập nhật tin nhắn
+        time.sleep(1)  # Loading effect
 
 # ✅ Send message
 if user_input:
