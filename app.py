@@ -22,6 +22,19 @@ if "chat_history" not in st.session_state or not isinstance(st.session_state["ch
 if "thread_id" not in st.session_state:
     st.session_state["thread_id"] = None
 
+# 📌 Giao diện chính với Logo
+st.markdown(
+    """
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 style="margin: 0;">💬 Generate Test Cases Chatbot</h1>
+        <img src="https://www.joblogic.com/wp-content/uploads/2021/02/joblogic-logo.png" 
+             alt="Joblogic Logo" style="height: 50px;">
+    </div>
+    <hr>
+    """,
+    unsafe_allow_html=True
+)
+
 # 📌 Gọi API OpenAI
 def call_openai_api(thread_id, message):
     headers = {
@@ -93,9 +106,6 @@ if st.session_state["thread_id"] is None:
         st.stop()
 
 thread_id = st.session_state["thread_id"]
-
-# 📌 Giao diện chính
-st.title("💬 Generate Test Cases Chatbot")
 
 # ✅ Hiển thị lịch sử chat
 for msg in st.session_state["chat_history"]:
