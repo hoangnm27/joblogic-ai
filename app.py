@@ -111,8 +111,12 @@ st.title("💬 Generate Test Cases Chatbot")
 
 # ✅ Show conversation history
 for msg in st.session_state["chat_history"]:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+    if isinstance(msg, dict) and "role" in msg and "content" in msg:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
+    else:
+        st.warning("⚠️ Data message error, please check again")
+
 
 # ✅ Message box
 user_input = st.chat_input("Input your message...")
